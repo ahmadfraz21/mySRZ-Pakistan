@@ -1,6 +1,5 @@
 // ─── mySRZ Simple Analytics Tracker ─────────────────────────────────────────
 // Lightweight, privacy-friendly tracking — page views, events, and basic device info.
-
 const WEBHOOK_URL = import.meta.env.VITE_TRACKER_WEBHOOK_URL as string | undefined;
 
 function getSessionId(): string {
@@ -46,11 +45,13 @@ function getDeviceInfo() {
 
 function getUTM() {
   const p = new URLSearchParams(window.location.search);
-  const utm: Record<string, string> = {};
-  ['utm_source','utm_medium','utm_campaign','utm_term','utm_content'].forEach(k => {
-    const v = p.get(k); if (v) utm[k] = v;
-  });
-  return Object.keys(utm).length ? utm : undefined;
+  return {
+    utm_source:   p.get('utm_source')   || null,
+    utm_medium:   p.get('utm_medium')   || null,
+    utm_campaign: p.get('utm_campaign') || null,
+    utm_term:     p.get('utm_term')     || null,
+    utm_content:  p.get('utm_content')  || null,
+  };
 }
 
 function send(event: string, extra?: Record<string, unknown>) {
@@ -83,10 +84,12 @@ function send(event: string, extra?: Record<string, unknown>) {
 
 let _startTime = Date.now();
 let _maxScroll = 0;
+
 window.addEventListener('scroll', () => {
   const depth = Math.round(((window.scrollY + window.innerHeight) / document.documentElement.scrollHeight) * 100);
   if (depth > _maxScroll) _maxScroll = depth;
 }, { passive: true });
+
 window.addEventListener('beforeunload', () => {
   if (!WEBHOOK_URL) return;
   const data = JSON.stringify({
